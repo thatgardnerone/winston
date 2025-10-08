@@ -149,9 +149,11 @@ def generate_summary():
         if pruned > 0:
             print(f"🗑️  Pruned {pruned} old snapshot(s)")
 
-        # Save to file with timestamp on separate line
+        # Save to file with timestamp on separate line (in local timezone)
         summary_file = Path.home() / ".winston_summary"
-        timestamp = response.timestamp.strftime('%Y-%m-%d %H:%M')
+        # Convert UTC timestamp to local timezone
+        local_timestamp = response.timestamp.astimezone()
+        timestamp = local_timestamp.strftime('%Y-%m-%d %H:%M %Z')
         summary_file.write_text(
             f"{response.answer}\n"
             f"\x1b[38;5;245m  └ {timestamp}\x1b[0m\n"
