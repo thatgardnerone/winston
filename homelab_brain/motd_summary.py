@@ -7,6 +7,7 @@ This script:
 2. Wakes tgoml if needed
 3. Asks Winston for a summary
 4. Saves to a file for MOTD to display
+5. Stores metrics in history for trend analysis
 """
 import sys
 import os
@@ -14,6 +15,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 from homelab_brain.brain import Brain
+from homelab_brain.history import HistoryStore
 
 
 def load_previous_state():
@@ -130,6 +132,15 @@ def generate_summary():
         # Save current state for next run
         save_current_state(current_context)
 
+        # Store metrics in history for trend analysis
+        history = HistoryStore()
+        history.append_snapshot(current_context)
+
+        # Prune old data every run (cheap operation)
+        pruned = history.prune_old_data(days=30)
+        if pruned > 0:
+            print(f"🗑️  Pruned {pruned} old snapshot(s)")
+
         # Save to file with timestamp on separate line
         summary_file = Path.home() / ".winston_summary"
         timestamp = response.timestamp.strftime('%Y-%m-%d %H:%M')
@@ -139,6 +150,7 @@ def generate_summary():
         )
 
         print(f"✅ Summary saved to {summary_file}")
+        print(f"📊 History: {history.get_snapshot_count()} snapshots stored")
         return 0
 
     except Exception as e:

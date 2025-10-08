@@ -119,6 +119,61 @@ All configuration is done via environment variables in `.env`:
 - **OllamaClient**: Manages connection to Ollama, auto-wakes GPU workstation
 - **CLI**: User-friendly command-line interface
 
+## Current Work: Historical Trends
+
+We're building historical trend tracking using a lean, iterative approach:
+
+### Iteration 1: Simple Time-Series Storage ✅ COMPLETE
+**Goal:** Store metrics over time without over-engineering
+
+- ✅ Extend JSON approach: `~/.winston_history.jsonl` (JSON Lines format)
+- ✅ Each line = one snapshot with timestamp
+- ✅ Keep last 30 days (auto-prune old data)
+- ✅ No querying yet, just collection
+
+**Result:** Background data collection working! Metrics stored every hour via cron.
+
+### Iteration 2: Basic Trend Detection (PLANNED)
+**Goal:** Detect simple patterns
+
+- Read last 7 days of history
+- Calculate averages (CPU, disk, issue count)
+- Compare current to 7-day average
+- Mention if significantly different (>20% change)
+
+**Example output:** "Disk usage is up 15% from your weekly average"
+
+### Iteration 3: SQLite Migration (FUTURE)
+**Goal:** Efficient querying for richer insights (only when JSONL gets unwieldy)
+
+- Migrate to SQLite with simple schema
+- Add queries for weekly/monthly trends
+- Keep it simple - no EAV until we need it
+
+### Iteration 4: Rich Insights (FUTURE)
+**Goal:** Smarter trend analysis
+
+- Week-over-week comparisons
+- Anomaly detection (spikes/dips)
+- Winston mentions most notable trend
+
+**Example output:** "Tgoml has been awake 40% more this week - burning through those tokens?"
+
+### Iteration 5: EAV Model (MAYBE)
+**Goal:** Flexible schema for arbitrary metrics (only if needed)
+
+- Entity-Attribute-Value schema for custom metrics
+- Query language for trends
+- Decision: Do we need this complexity?
+
+### Key Metrics to Track
+- CPU usage (percent, load average)
+- Memory usage (percent, GB free)
+- Disk usage (percent, GB free)
+- Issue count (from health checks)
+- Container counts (local + remote)
+- Host reachability (tgoml wake/sleep cycles)
+
 ## Development
 
 Run tests:
