@@ -3,7 +3,7 @@ import psutil
 import subprocess
 import json
 import re
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from config import config
 
 
@@ -66,6 +66,46 @@ class SystemContext:
             }
         except Exception as e:
             return {"error": str(e)}
+
+    def gather_remote_host(self, hostname: Optional[str] = None) -> Dict[str, Any]:
+        """Get Docker container status from remote host via SSH"""
+        if not hostname:
+            hostname = config("homelab.tgoml.hostname")
+
+        try:
+            # Try to get Docker container info via SSH
+            result = subprocess.run(
+                ['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=3',
+                 f'jamie@{hostname}',
+                 'docker ps --format "{{.Names}}\t{{.State}}\t{{.Status}}"'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode != 0:
+                return {"error": "Host unreachable or SSH failed", "reachable": False}
+
+            containers = []
+            for line in result.stdout.strip().split('\n'):
+                if not line:
+                    continue
+                parts = line.split('\t')
+                if len(parts) >= 2:
+                    containers.append({
+                        "name": parts[0],
+                        "state": parts[1] if len(parts) > 1 else "unknown",
+                        "status": parts[2] if len(parts) > 2 else "unknown",
+                    })
+
+            return {
+                "hostname": hostname,
+                "reachable": True,
+                "container_count": len(containers),
+                "containers": containers,
+            }
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
+            return {"error": str(e), "reachable": False}
 
     def gather_health(self) -> Dict[str, Any]:
         """Get health check status from homelab-health"""
@@ -147,6 +187,12 @@ class SystemContext:
         # Always include health status for summaries or when explicitly requested
         if any(word in query_lower for word in ['summary', 'status', 'health', 'issue', 'problem', 'error']):
             context['health'] = self.gather_health()
+            # Also check remote host for summaries
+            context['remote_host'] = self.gather_remote_host()
+
+        # Check for remote host/tgoml keywords
+        if any(word in query_lower for word in ['tgoml', 'remote', 'gpu', 'workstation']):
+            context['remote_host'] = self.gather_remote_host()
 
         # If no specific context matched, gather a summary
         if not context:
@@ -154,6 +200,7 @@ class SystemContext:
                 'cpu': self.gather_cpu(),
                 'memory': self.gather_memory(),
                 'health': self.gather_health(),
+                'remote_host': self.gather_remote_host(),
             }
 
         return context
@@ -189,5 +236,16 @@ class SystemContext:
                     lines.append("  Issues found:")
                     for issue in health['issues']:
                         lines.append(f"    • {issue['category']}: {issue['name']} - {issue['message']}")
+
+        if 'remote_host' in context:
+            remote = context['remote_host']
+            if remote.get('reachable'):
+                hostname = remote.get('hostname', 'remote host')
+                container_count = remote.get('container_count', 0)
+                lines.append(f"- Remote host ({hostname}): {container_count} containers running")
+                for c in remote.get('containers', [])[:5]:  # Limit to first 5
+                    lines.append(f"  • {c['name']}: {c['status']}")
+            else:
+                lines.append(f"- Remote host: unreachable or sleeping")
 
         return '\n'.join(lines)

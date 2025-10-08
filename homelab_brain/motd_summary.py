@@ -31,10 +31,13 @@ def save_current_state(context):
     """Save current state for next run comparison"""
     state_file = Path.home() / ".winston_state.json"
     health = context.get('health', {})
+    remote = context.get('remote_host', {})
     state = {
         'services': health.get('total_services', 0),
         'containers': health.get('total_containers', 0),
         'issues': health.get('issue_count', 0),
+        'remote_containers': remote.get('container_count', 0) if remote.get('reachable') else 0,
+        'remote_reachable': remote.get('reachable', False),
         'timestamp': datetime.now().isoformat()
     }
     state_file.write_text(json.dumps(state, indent=2))
@@ -46,27 +49,39 @@ def detect_changes(previous, current_context):
         return None
 
     health = current_context.get('health', {})
+    remote = current_context.get('remote_host', {})
     current = {
         'services': health.get('total_services', 0),
         'containers': health.get('total_containers', 0),
-        'issues': health.get('issue_count', 0)
+        'issues': health.get('issue_count', 0),
+        'remote_containers': remote.get('container_count', 0) if remote.get('reachable') else 0,
+        'remote_reachable': remote.get('reachable', False)
     }
 
     changes = []
-    if current['issues'] < previous['issues']:
+    if current['issues'] < previous.get('issues', 0):
         resolved = previous['issues'] - current['issues']
         changes.append(f"{resolved} issue(s) resolved since last check")
-    elif current['issues'] > previous['issues']:
+    elif current['issues'] > previous.get('issues', 0):
         new = current['issues'] - previous['issues']
         changes.append(f"{new} new issue(s) detected")
 
-    if current['services'] != previous['services']:
+    if current['services'] != previous.get('services', 0):
         diff = current['services'] - previous['services']
         changes.append(f"{abs(diff)} service(s) {'started' if diff > 0 else 'stopped'}")
 
-    if current['containers'] != previous['containers']:
+    if current['containers'] != previous.get('containers', 0):
         diff = current['containers'] - previous['containers']
         changes.append(f"{abs(diff)} container(s) {'started' if diff > 0 else 'stopped'}")
+
+    # Track remote host changes
+    if current['remote_reachable'] and not previous.get('remote_reachable', False):
+        changes.append("tgoml woke up")
+    elif not current['remote_reachable'] and previous.get('remote_reachable', False):
+        changes.append("tgoml went to sleep")
+    elif current['remote_reachable'] and current['remote_containers'] != previous.get('remote_containers', 0):
+        diff = current['remote_containers'] - previous.get('remote_containers', 0)
+        changes.append(f"tgoml: {abs(diff)} container(s) {'started' if diff > 0 else 'stopped'}")
 
     return changes if changes else None
 
