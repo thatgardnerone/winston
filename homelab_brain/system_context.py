@@ -97,13 +97,16 @@ class SystemContext:
                             "message": match.group(3).strip(),
                         })
 
-            # Extract summary (e.g., "27 services • 3 containers • 1 issue")
-            summary_match = re.search(r'(\d+)\s+services\s+•\s+(\d+)\s+containers\s+•\s+(\d+)\s+issue', output)
+            # Extract summary - handles both formats:
+            # "27 services • 3 containers • 1 issue" (when issues exist)
+            # "27 services • 3 containers running" (when no issues)
+            summary_match = re.search(r'(\d+)\s+services\s+•\s+(\d+)\s+containers', output)
+            issue_match = re.search(r'(\d+)\s+issue', output)
 
             return {
                 "total_services": int(summary_match.group(1)) if summary_match else 0,
                 "total_containers": int(summary_match.group(2)) if summary_match else 0,
-                "issue_count": int(summary_match.group(3)) if summary_match else 0,
+                "issue_count": int(issue_match.group(1)) if issue_match else len(issues),
                 "issues": issues,
             }
         except Exception as e:
