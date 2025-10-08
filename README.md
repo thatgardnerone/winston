@@ -184,6 +184,37 @@ pytest -v  # verbose
 pytest tests/test_brain.py  # specific test
 ```
 
+## Future Work
+
+Ideas for future enhancements:
+
+### CLI Improvements
+- **Verbose mode** (`-v` flag) - Show context gathered, duration, confidence scores
+- **JSON output** (`--json`) - Machine-readable responses
+- **Streaming responses** - Show AI response as it generates
+
+### Agentic Capabilities
+- **MCP servers** - Tool system for Winston to take actions
+- **Permission tiers** - Auto-allow safe actions, require approval for destructive ones
+- **Action logging** - Track everything Winston does
+- **Rollback system** - Undo actions if needed
+
+### Historical Trends (Advanced)
+- **SQLite migration** - Better performance for complex queries
+- **Week-over-week comparisons** - "CPU usage up 20% from last week"
+- **Anomaly detection** - Detect unusual spikes/patterns
+- **Custom metrics** - Track application-specific data
+
+### Multi-Host Expansion
+- **Dynamic host discovery** - Auto-detect hosts on network
+- **Host groups** - Organize by environment (prod, staging, dev)
+- **Cross-host queries** - "Which host has the most free memory?"
+
+### Notifications & Alerts
+- **Alert thresholds** - Notify when disk >90%, etc.
+- **Notification channels** - Email, Slack, Discord, etc.
+- **Alert history** - Track when issues occurred and resolved
+
 ## License
 
 MIT

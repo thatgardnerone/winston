@@ -28,19 +28,14 @@ def main():
         question = " ".join(sys.argv[2:])
         brain = Brain()
 
-        print(f"\n🧠 Winston: ", end="", flush=True)
         response = brain.ask(question)
-        print(response.answer)
-
-        if response.context_gathered:
-            print(f"\n📊 Context: {', '.join(response.context_gathered)}")
-        print(f"⏱️  {response.duration_ms:.0f}ms • Confidence: {response.confidence:.0%}\n")
+        print(f"\n{response.answer}\n")
 
     elif command == "status":
         brain = Brain()
         response = brain.ask("Give me a quick status summary of the system")
 
-        print(f"\n🧠 Winston: {response.answer}\n")
+        print(f"\n{response.answer}\n")
 
     else:
         print(f"Unknown command: {command}")
