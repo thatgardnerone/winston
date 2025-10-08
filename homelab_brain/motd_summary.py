@@ -9,6 +9,7 @@ This script:
 4. Saves to a file for MOTD to display
 """
 import sys
+import os
 from pathlib import Path
 from datetime import datetime
 from homelab_brain.brain import Brain
@@ -18,11 +19,23 @@ def generate_summary():
     """Generate Winston's summary and save it"""
     brain = Brain()
 
-    # Ask Winston for a summary
+    # Get current user and time context
+    username = os.getenv('USER', 'there')
+    hour = datetime.now().hour
+    if hour < 12:
+        greeting = "morning"
+    elif hour < 18:
+        greeting = "afternoon"
+    else:
+        greeting = "evening"
+
+    # Ask Winston for a summary with personality
     query = (
-        "Give me a brief summary of the homelab status. "
-        "Mention any issues or things that need attention. "
-        "Keep it under 2 sentences."
+        f"You are Winston, a witty AI butler managing {username}'s homelab. "
+        f"Greet them briefly (good {greeting}, {username}). "
+        f"Summarize the homelab status in one concise sentence. "
+        f"Speak in first person ('I'm monitoring...', 'I've kept...'). "
+        f"Be sophisticated but brief. Mention issues if they exist, otherwise reassure."
     )
 
     try:
