@@ -51,7 +51,7 @@ class Brain:
         context_keys = list(sys_context.keys())
 
         # Generate answer
-        # Use Ollama if available (will auto-wake tgoml if needed), fallback to mock
+        # Use Ollama if available (will auto-wake tgoml if needed)
         try:
             if self.ollama.ensure_available():
                 system_prompt = (
@@ -62,13 +62,13 @@ class Brain:
                 answer = self.ollama.generate(query, system=system_prompt)
                 confidence = 0.8
             else:
-                # Mock response if Ollama unavailable even after wake attempt
-                answer = self._mock_answer(query)
-                confidence = 0.5
-        except Exception:
-            # Fallback to mock on any error
-            answer = self._mock_answer(query)
-            confidence = 0.5
+                # Ollama unavailable even after wake attempt
+                answer = "Winston is currently unavailable (AI inference server not responding)"
+                confidence = 0.0
+        except Exception as e:
+            # Error connecting to Ollama
+            answer = f"Winston is currently unavailable ({str(e)})"
+            confidence = 0.0
 
         duration_ms = (time.time() - start_time) * 1000
 
@@ -80,19 +80,3 @@ class Brain:
             context_gathered=context_keys,
             timestamp=datetime.now()
         )
-
-    def _mock_answer(self, query: str) -> str:
-        """
-        Mock answer for testing
-        TODO: Replace with real Ollama call
-        """
-        query_lower = query.lower()
-
-        # Simple pattern matching for tests
-        if "2+2" in query_lower or "2 + 2" in query_lower:
-            return "The answer is 4"
-
-        if "hello" in query_lower or "hi" in query_lower:
-            return "Hello! I'm Winston, your homelab assistant."
-
-        return f"I heard you ask: '{query}'. (Mock response - Ollama not connected yet)"

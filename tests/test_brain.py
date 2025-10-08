@@ -5,6 +5,7 @@ Following TDD: write the API we want first, then make it work
 """
 
 import pytest
+from unittest.mock import Mock, patch
 from homelab_brain.brain import Brain
 from homelab_brain.models import Response
 
@@ -12,12 +13,19 @@ from homelab_brain.models import Response
 class TestBrainBasics:
     """Test core Brain functionality"""
 
-    def test_brain_can_answer_simple_question(self):
+    @patch('homelab_brain.brain.OllamaClient')
+    def test_brain_can_answer_simple_question(self, mock_ollama_class):
         """
         The dream: Ask Winston a simple question and get an answer
 
         This is our "hello world" - if this works, the magic is real!
         """
+        # Mock Ollama to return a simple answer
+        mock_ollama = Mock()
+        mock_ollama.ensure_available.return_value = True
+        mock_ollama.generate.return_value = "The answer is 4"
+        mock_ollama_class.return_value = mock_ollama
+
         brain = Brain()
         response = brain.ask("What is 2+2?")
 
@@ -27,15 +35,21 @@ class TestBrainBasics:
         # Answer should contain "4"
         assert "4" in response.answer.lower()
 
-        # Should have confidence (even if low for mock)
+        # Should have confidence
         assert response.confidence >= 0
         assert response.confidence <= 1.0
 
         # Should track duration
         assert response.duration_ms > 0
 
-    def test_brain_response_has_timestamp(self):
+    @patch('homelab_brain.brain.OllamaClient')
+    def test_brain_response_has_timestamp(self, mock_ollama_class):
         """Every response should be timestamped"""
+        mock_ollama = Mock()
+        mock_ollama.ensure_available.return_value = True
+        mock_ollama.generate.return_value = "Hello! How can I help?"
+        mock_ollama_class.return_value = mock_ollama
+
         brain = Brain()
         response = brain.ask("Hello")
 

@@ -80,20 +80,17 @@ class OllamaClient:
             if result.returncode != 0:
                 return False
 
-            # SSH in to trigger Docker Desktop to start
-            print("🐳 Triggering Docker startup...")
-            import getpass
-            username = getpass.getuser()
-            subprocess.run(
-                ['ssh', f'{username}@{self.tgoml_hostname}', 'echo "Docker check"'],
-                capture_output=True,
-                timeout=10
-            )
+            # When waking from sleep, Docker should already be running
+            # Just verify Ollama is accessible
+            print("🔍 Checking Ollama availability...")
+            for attempt in range(6):  # Try for ~30 seconds
+                if self.is_available():
+                    print(f"✓ Ollama ready after {attempt * 5}s")
+                    return True
+                time.sleep(5)
 
-            # Give Docker a moment to start
-            time.sleep(10)
-
-            return True
+            print("⚠ Ollama not responding after wake")
+            return False
 
         except Exception as e:
             print(f"❌ Failed to wake tgoml: {e}")
