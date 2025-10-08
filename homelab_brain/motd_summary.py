@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 from homelab_brain.brain import Brain
-from homelab_brain.history import HistoryStore
+from homelab_brain.history import HistoryStore, TrendAnalyzer
 
 
 def load_previous_state():
@@ -107,14 +107,23 @@ def generate_summary():
     ctx = SystemContext()
     current_context = ctx.gather_relevant("status summary")
 
-    # Check for changes
+    # Initialize history store (used for both trends and storage)
+    history = HistoryStore()
+
+    # Analyze trends from historical data (before adding current snapshot)
+    analyzer = TrendAnalyzer(history)
+    trends = analyzer.detect_significant_changes(current_context)
+
+    # Check for changes (immediate, last-run comparison)
     previous_state = load_previous_state()
     changes = detect_changes(previous_state, current_context)
 
-    # Build query with change context
+    # Build query with change and trend context
     change_context = ""
     if changes:
-        change_context = f" Notable changes: {', '.join(changes)}."
+        change_context += f" Recent changes: {', '.join(changes)}."
+    if trends:
+        change_context += f" Trends: {', '.join(trends)}."
 
     # Ask Winston for a summary with personality
     query = (
@@ -133,7 +142,6 @@ def generate_summary():
         save_current_state(current_context)
 
         # Store metrics in history for trend analysis
-        history = HistoryStore()
         history.append_snapshot(current_context)
 
         # Prune old data every run (cheap operation)

@@ -133,15 +133,16 @@ We're building historical trend tracking using a lean, iterative approach:
 
 **Result:** Background data collection working! Metrics stored every hour via cron.
 
-### Iteration 2: Basic Trend Detection (PLANNED)
+### Iteration 2: Basic Trend Detection ✅ COMPLETE
 **Goal:** Detect simple patterns
 
-- Read last 7 days of history
-- Calculate averages (CPU, disk, issue count)
-- Compare current to 7-day average
-- Mention if significantly different (>20% change)
+- ✅ Read last 7 days of history
+- ✅ Calculate averages (issues, containers - local & remote, services)
+- ✅ Compare current to 7-day average
+- ✅ Mention if significantly different (>20% change)
+- ✅ Pass trend insights to Winston's prompt
 
-**Example output:** "Disk usage is up 15% from your weekly average"
+**Result:** Winston now mentions significant trends! "Tgoml containers up 33%" or "Issues down 50% from weekly average"
 
 ### Iteration 3: SQLite Migration (FUTURE)
 **Goal:** Efficient querying for richer insights (only when JSONL gets unwieldy)
