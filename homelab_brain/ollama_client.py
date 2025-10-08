@@ -80,16 +80,20 @@ class OllamaClient:
             if result.returncode != 0:
                 return False
 
-            # When waking from sleep, Docker should already be running
-            # Just verify Ollama is accessible
-            print("🔍 Checking Ollama availability...")
-            for attempt in range(6):  # Try for ~30 seconds
+            # When waking from sleep, Docker containers need time to start
+            # Ollama can take 60-90s to be ready after system wake
+            print("🔍 Waiting for Ollama to start (up to 90s)...")
+            for attempt in range(18):  # Try for ~90 seconds
                 if self.is_available():
-                    print(f"✓ Ollama ready after {attempt * 5}s")
+                    wait_time = attempt * 5
+                    print(f"✓ Ollama ready after {wait_time}s")
                     return True
-                time.sleep(5)
+                if attempt % 3 == 0:  # Log every 15s
+                    print(f"  ... still waiting ({attempt * 5}s)")
+                if attempt < 17:  # Don't sleep on last attempt
+                    time.sleep(5)
 
-            print("⚠ Ollama not responding after wake")
+            print("⚠ Ollama not responding after 90s - may need manual intervention")
             return False
 
         except Exception as e:
