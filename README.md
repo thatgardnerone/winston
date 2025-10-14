@@ -80,9 +80,9 @@ SCRIPT
 sudo chmod +x /etc/update-motd.d/95-winston
 ```
 
-2. Set up hourly cron job:
+2. Set up cron job (runs every 6 hours):
 ```bash
-(crontab -l 2>/dev/null; echo "0 * * * * cd $HOME/code/homelab-brain && .venv/bin/python3 -m homelab_brain.motd_summary >> $HOME/.winston.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "0 */6 * * * cd $HOME/code/homelab-brain && .venv/bin/python3 -m homelab_brain.motd_summary >> $HOME/.winston.log 2>&1") | crontab -
 ```
 
 ## Configuration
@@ -131,7 +131,7 @@ We're building historical trend tracking using a lean, iterative approach:
 - ✅ Keep last 30 days (auto-prune old data)
 - ✅ No querying yet, just collection
 
-**Result:** Background data collection working! Metrics stored every hour via cron.
+**Result:** Background data collection working! Metrics stored every 6 hours via cron.
 
 ### Iteration 2: Basic Trend Detection ✅ COMPLETE
 **Goal:** Detect simple patterns
